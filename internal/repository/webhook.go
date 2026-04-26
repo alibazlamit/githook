@@ -25,4 +25,5 @@ type WebhookRepository interface {
 	Insert(ctx context.Context, event *WebhookEvent) error
 	UpdateStatus(ctx context.Context, deliveryID, status string, processedAt *time.Time) error
 	FindStuck(ctx context.Context, olderThan time.Duration) ([]*WebhookEvent, error)
+	DeliveryExists(ctx context.Context, deliveryID string) (bool, error)
 }

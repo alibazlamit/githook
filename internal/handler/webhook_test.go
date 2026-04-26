@@ -12,6 +12,9 @@ import (
 
 type mockWebhookSvc struct {
 	validateResult bool
+	duplicate      bool
+	dupErr         error
+	ingestErr      error
 }
 
 func (m *mockWebhookSvc) ValidateSignature(_ string, _ []byte) bool {
@@ -19,24 +22,35 @@ func (m *mockWebhookSvc) ValidateSignature(_ string, _ []byte) bool {
 }
 
 func (m *mockWebhookSvc) Ingest(_ context.Context, _, _ string, _ []byte) error {
-	return nil
+	return m.ingestErr
 }
 
-func TestWebhookHandlerSignatureValidation(t *testing.T) {
+func (m *mockWebhookSvc) CheckDuplicate(_ context.Context, _ string) (bool, error) {
+	return m.duplicate, m.dupErr
+}
+
+func TestWebhookHandlerServeHTTP(t *testing.T) {
 	body := []byte(`{"action":"opened"}`)
 
 	tests := []struct {
 		name           string
 		validateResult bool
+		duplicate      bool
+		dupErr         error
 		wantStatus     int
 	}{
-		{"invalid signature", false, http.StatusUnauthorized},
-		{"valid signature", true, http.StatusInternalServerError}, // passes auth; 500 = downstream not yet wired
+		{"invalid signature", false, false, nil, http.StatusUnauthorized},
+		{"valid signature", true, false, nil, http.StatusInternalServerError}, // passes auth + idempotency; 500 = ingest not yet wired
+		{"duplicate delivery", true, true, nil, http.StatusConflict},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			h := handler.NewWebhookHandler(&mockWebhookSvc{validateResult: tt.validateResult})
+			h := handler.NewWebhookHandler(&mockWebhookSvc{
+				validateResult: tt.validateResult,
+				duplicate:      tt.duplicate,
+				dupErr:         tt.dupErr,
+			})
 			req := httptest.NewRequest(http.MethodPost, "/webhook/github", bytes.NewReader(body))
 			rec := httptest.NewRecorder()
 			h.ServeHTTP(rec, req)

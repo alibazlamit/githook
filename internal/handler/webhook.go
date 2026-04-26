@@ -10,6 +10,7 @@ import (
 type webhookIngestor interface {
 	ValidateSignature(sig string, body []byte) bool
 	Ingest(ctx context.Context, deliveryID, eventType string, payload []byte) error
+	CheckDuplicate(ctx context.Context, deliveryID string) (bool, error)
 }
 
 type WebhookHandler struct {
@@ -32,7 +33,18 @@ func (h *WebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// slices 4-5: idempotency check and ingest
+	deliveryID := r.Header.Get("X-GitHub-Delivery")
+	dup, err := h.svc.CheckDuplicate(r.Context(), deliveryID)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "idempotency check failed")
+		return
+	}
+	if dup {
+		writeError(w, http.StatusConflict, "duplicate delivery")
+		return
+	}
+
+	// slice 5: ingest
 	writeError(w, http.StatusInternalServerError, "not implemented")
 }
 
