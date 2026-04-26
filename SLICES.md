@@ -9,7 +9,7 @@ Tracks vertical slice implementation progress. Each slice delivers one end-to-en
 | 0 | Project scaffolding — module, structure, migrations | ✅ Done | — |
 | 1 | `GET /health` — server starts, health endpoint returns 200 | ✅ Done | — |
 | 2 | DB schema — migration applied, table exists | ✅ Done | — |
-| 3 | Signature validation — invalid sig returns 401 | ⬜ Todo | AC #2 |
+| 3 | Signature validation — invalid sig returns 401 | ✅ Done | AC #2 |
 | 4 | Idempotency — duplicate delivery returns 409 | ⬜ Todo | AC #1 |
 | 5 | Happy path ingest — valid event stored + published to NATS | ⬜ Todo | AC #3, #4 |
 | 6 | NATS worker — consumes messages, updates row status | ⬜ Todo | AC #5 |
