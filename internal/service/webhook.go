@@ -32,7 +32,7 @@ func (s *webhookService) ValidateSignature(sig string, body []byte) bool {
 	return hmac.Equal([]byte(sig[len(prefix):]), []byte(expected))
 }
 
-func (s *webhookService) Ingest(_ context.Context, _, _ string, _ []byte) error {
+func (s *webhookService) Ingest(ctx context.Context, deliveryID, eventType string, payload []byte) error {
 	// implemented in slice 5
 	return nil
 }
