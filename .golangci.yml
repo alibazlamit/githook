@@ -1,0 +1,30 @@
+linters:
+  enable:
+    - errcheck       # unhandled errors
+    - gosimple       # simplification suggestions
+    - govet          # suspicious constructs
+    - ineffassign    # unused assignments
+    - staticcheck    # static analysis
+    - unused         # unused code
+    - gofmt          # formatting
+    - goimports      # import ordering
+    - revive         # opinionated linter (replaces golint)
+    - noctx          # http requests without context
+    - bodyclose      # unclosed http response bodies
+    - sqlclosecheck  # unclosed sql rows/statements
+    - exhaustruct    # all struct fields must be initialized (helps catch missing fields)
+
+linters-settings:
+  revive:
+    rules:
+      - name: exported
+      - name: error-return
+      - name: error-strings
+      - name: error-naming
+      - name: var-naming
+
+issues:
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - exhaustruct  # test structs don't need all fields set

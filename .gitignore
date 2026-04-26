@@ -1,0 +1,27 @@
+# Build output
+/githook
+bin/
+
+# Go test artifacts
+*.test
+*.out
+coverage.html
+coverage.out
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude Code local settings
+.claude/settings.local.json
