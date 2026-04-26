@@ -2,26 +2,22 @@ package handler
 
 import (
 	"context"
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"io"
 	"net/http"
-	"strings"
 )
 
 type webhookIngestor interface {
+	ValidateSignature(sig string, body []byte) bool
 	Ingest(ctx context.Context, deliveryID, eventType string, payload []byte) error
 }
 
 type WebhookHandler struct {
-	svc    webhookIngestor
-	secret string
+	svc webhookIngestor
 }
 
-func NewWebhookHandler(svc webhookIngestor, secret string) *WebhookHandler {
-	return &WebhookHandler{svc: svc, secret: secret}
+func NewWebhookHandler(svc webhookIngestor) *WebhookHandler {
+	return &WebhookHandler{svc: svc}
 }
 
 func (h *WebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -31,7 +27,7 @@ func (h *WebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !h.validSignature(r.Header.Get("X-Hub-Signature-256"), body) {
+	if !h.svc.ValidateSignature(r.Header.Get("X-Hub-Signature-256"), body) {
 		writeError(w, http.StatusUnauthorized, "invalid or missing signature")
 		return
 	}
@@ -40,21 +36,8 @@ func (h *WebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	writeError(w, http.StatusInternalServerError, "not implemented")
 }
 
-// validSignature reports whether sig is a valid HMAC-SHA256 signature of body
-// using h.secret. The sig must be prefixed with "sha256=".
-func (h *WebhookHandler) validSignature(sig string, body []byte) bool {
-	const prefix = "sha256="
-	if !strings.HasPrefix(sig, prefix) {
-		return false
-	}
-	mac := hmac.New(sha256.New, []byte(h.secret))
-	mac.Write(body)
-	expected := hex.EncodeToString(mac.Sum(nil))
-	return hmac.Equal([]byte(sig[len(prefix):]), []byte(expected))
-}
-
 func writeError(w http.ResponseWriter, code int, msg string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
-	json.NewEncoder(w).Encode(map[string]string{"error": msg})
+	_ = json.NewEncoder(w).Encode(map[string]string{"error": msg}) // error unrecoverable after WriteHeader
 }
