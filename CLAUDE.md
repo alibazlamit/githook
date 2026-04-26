@@ -58,8 +58,19 @@ All errors must be wrapped with context using `fmt.Errorf("functionName: %w", er
 ### Dependencies
 Do not add any dependency not already in `go.mod` without asking first.
 
-### Commits
-Each slice ends with a git commit. Format: `slice N: description` (e.g. `slice 1: GET /health handler and test`). After marking a slice done in SLICES.md, always remind the user to commit before moving to the next slice.
+### Branching and Commits
+Each slice is implemented on its own branch. Workflow at the end of every slice:
+
+```bash
+git checkout -b slice-N/short-kebab-description
+git add .
+git commit -m "slice N: description"
+git push -u origin slice-N/short-kebab-description
+```
+
+Branch naming: `slice-N/kebab-case-summary` (e.g. `slice-3/signature-validation`).
+Commit format: `slice N: description` (e.g. `slice 3: HMAC-SHA256 signature validation, returns 401 on invalid or missing sig`).
+After pushing, open the PR automatically with `gh pr create`. If `gh` is unavailable, print the compare URL instead.
 
 ## Do Not
 
